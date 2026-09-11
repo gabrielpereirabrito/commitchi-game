@@ -1,0 +1,12 @@
+{
+  "creatureId": "placeholder",
+  "frameWidth": 96,
+  "frameHeight": 96,
+  "states": {
+    "idle": { "sheet": "idle.png", "frameCount": 4, "fps": 4 },
+    "sleeping": { "sheet": "sleeping.png", "frameCount": 2, "fps": 1 },
+    "eating": { "sheet": "eating.png", "frameCount": 6, "fps": 8 },
+    "celebrating": { "sheet": "celebrating.png", "frameCount": 6, "fps": 8 },
+    "sad": { "sheet": "sad.png", "frameCount": 2, "fps": 2 }
+  }
+}
