@@ -1,1 +1,27 @@
 /docs
+
+# dependencies
+node_modules/
+
+# build output
+/out
+/dist
+/dist-electron
+/release
+
+# env
+.env
+.env.*
+
+# logs
+*.log
+npm-debug.log*
+
+# editor/OS
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+
+# local sqlite (sql.js) db used only for manual dev testing
+*.sqlite
+*.sqlite-journal
