@@ -1,13 +1,18 @@
-import { app, BrowserWindow, dialog, shell } from 'electron'
+import { app, BrowserWindow, dialog, Menu, nativeImage, shell, Tray } from 'electron'
 import { join } from 'path'
 import { normalizeRepoPathKey } from '@shared/paths'
 import { adoptProject, initDatabase, listProjects } from './db'
 import { getCurrentHead, reconcileProject } from './git-sync'
-import { forwardXpGainedEvents, registerIpcHandlers } from './ipc'
+import { forwardXpGainedEvents, registerIpcHandlers, registerWindowControlHandlers } from './ipc'
 import { logger } from './logger'
 import { watchProjectForCommits } from './watcher'
 
 let activeProjectId: number | null = null
+let tray: Tray | null = null
+let isQuitting = false
+
+const APP_ICON_PATH = join(__dirname, '../../resources/icons/app-icon.png')
+const TRAY_ICON_PATH = join(__dirname, '../../resources/icons/tray-icon.png')
 
 function createWindow(): BrowserWindow {
   const window = new BrowserWindow({
@@ -17,6 +22,7 @@ function createWindow(): BrowserWindow {
     frame: false,
     transparent: true,
     resizable: false,
+    icon: nativeImage.createFromPath(APP_ICON_PATH),
     webPreferences: {
       preload: join(__dirname, '../preload/index.mjs'),
       sandbox: false
@@ -29,6 +35,14 @@ function createWindow(): BrowserWindow {
     return { action: 'deny' }
   })
 
+  // Fechar esconde a janela em vez de matar o processo — o watcher de commits
+  // continua rodando em segundo plano. Ver docs/adr/frontend/0004.
+  window.on('close', (event) => {
+    if (isQuitting) return
+    event.preventDefault()
+    window.hide()
+  })
+
   if (process.env['ELECTRON_RENDERER_URL']) {
     window.loadURL(process.env['ELECTRON_RENDERER_URL'])
   } else {
@@ -36,6 +50,29 @@ function createWindow(): BrowserWindow {
   }
 
   return window
+}
+
+function createTray(window: BrowserWindow): Tray {
+  const trayIcon = nativeImage.createFromPath(TRAY_ICON_PATH)
+  const trayInstance = new Tray(trayIcon)
+  trayInstance.setToolTip('Commitchi')
+  trayInstance.setContextMenu(
+    Menu.buildFromTemplate([
+      {
+        label: 'Mostrar Commitchi',
+        click: () => window.show()
+      },
+      {
+        label: 'Sair',
+        click: () => {
+          isQuitting = true
+          app.quit()
+        }
+      }
+    ])
+  )
+  trayInstance.on('click', () => (window.isVisible() ? window.hide() : window.show()))
+  return trayInstance
 }
 
 /**
@@ -69,6 +106,7 @@ app.whenReady().then(async () => {
 
   const window = createWindow()
   forwardXpGainedEvents(window)
+  tray = createTray(window)
 
   // Registrado antes do fluxo de adoção (que pode ficar minutos esperando o diálogo)
   // pra evitar "No handler registered" enquanto isso — pet:get/pet:action rejeitam
@@ -77,6 +115,7 @@ app.whenReady().then(async () => {
     if (activeProjectId === null) throw new Error('Nenhum projeto ativo ainda')
     return activeProjectId
   })
+  registerWindowControlHandlers(window)
 
   try {
     activeProjectId = await ensureActiveProject()
@@ -90,6 +129,10 @@ app.whenReady().then(async () => {
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })
+})
+
+app.on('before-quit', () => {
+  isQuitting = true
 })
 
 app.on('window-all-closed', () => {
