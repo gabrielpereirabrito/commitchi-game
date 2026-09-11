@@ -8,7 +8,9 @@ const api = {
     const listener = (_event: Electron.IpcRendererEvent, payload: XpGainedEvent): void => callback(payload)
     ipcRenderer.on(IPC_CHANNELS.PET_XP_GAINED, listener)
     return () => ipcRenderer.removeListener(IPC_CHANNELS.PET_XP_GAINED, listener)
-  }
+  },
+  minimizeWindow: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_MINIMIZE),
+  hideWindow: (): Promise<void> => ipcRenderer.invoke(IPC_CHANNELS.WINDOW_HIDE)
 }
 
 export type CommitchiApi = typeof api

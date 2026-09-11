@@ -9,3 +9,12 @@ body,
   height: 100%;
   background: transparent;
 }
+
+/* Janela é frameless (docs/adr/frontend/0004) — arrastar/clicar precisa ser marcado na mão. */
+.drag-region {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}

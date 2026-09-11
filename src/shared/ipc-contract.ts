@@ -34,5 +34,7 @@ export type XpGainedEvent = z.infer<typeof XpGainedEventSchema>
 export const IPC_CHANNELS = {
   PET_GET: 'pet:get',
   PET_ACTION: 'pet:action',
-  PET_XP_GAINED: 'pet:xpGained'
+  PET_XP_GAINED: 'pet:xpGained',
+  WINDOW_MINIMIZE: 'window:minimize',
+  WINDOW_HIDE: 'window:hide'
 } as const
